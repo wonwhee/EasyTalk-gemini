@@ -15,7 +15,7 @@ let aiStats = {
 };
 
 // API 설정
-let GEMINI_API_KEY = '';
+const GEMINI_API_KEY = 'AIzaSyAiGb4CiJlNrReMmTJV-nX5X_9zR53yx1w'; // 하드코딩
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
 // 말투별 설정 - 순수 문장만 출력
@@ -976,4 +976,5 @@ console.log('2. undefined 오류 자동 해결');
 console.log('3. AI 실패 시 백업 변환기 작동');
 console.log('4. 강화된 오류 처리 및 안정성');
 console.log('5. 경계성 지능 맞춤 쉬운 변환');
+
 console.log('브라우저 콘솔에서 debugSystem() 함수로 시스템 디버그 가능');
