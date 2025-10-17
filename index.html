@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyTalk - 쉬운 말 변환기</title>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; color: #333;
+        }
+        
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        
+        /* 로그인 화면 */
+        .login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 10000;
+        }
+        
+        .login-form {
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+            border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            text-align: center; min-width: 400px;
+        }
+        
+        .app-logo {
+            font-size: 3rem; margin-bottom: 10px; background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; font-weight: 800;
+        }
+        
+        .login-title { font-size: 1.2rem; color: #475569; margin-bottom: 30px; font-weight: 600; }
+        
+        .login-input {
+            width: 100%; padding: 15px 20px; margin: 10px 0; border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 16px; background: white;
+        }
+        .login-input:focus { outline: none; border-color: #667eea; }
+        
+        .login-btn {
+            width: 100%; background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 15px; border-radius: 10px;
+            font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+        
+        .guest-login-btn { background: linear-gradient(135deg, #10b981, #059669); margin-top: 10px; }
+        
+        .login-info {
+            margin-top: 20px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;
+            font-size: 12px; text-align: center;
+        }
+        
+        /* 사용자 표시 */
+        .user-indicator {
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            padding: 10px 20px; border-radius: 20px; font-weight: 600; font-size: 14px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); color: white;
+        }
+        
+        .admin-indicator { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .guest-indicator { background: linear-gradient(135deg, #10b981, #059669); }
+        
+        /* 헤더 */
+        .header {
+            text-align: center; color: white; padding: 30px 0; margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1); border-radius: 20px; backdrop-filter: blur(20px);
+            position: relative;
+        }
+        .header h1 { font-size: 2.5rem; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); font-weight: 800; }
+        .header p { font-size: 1rem; opacity: 0.9; }
+        
+        .logout-btn {
+            position: absolute; top: 20px; right: 20px; 
+            background: rgba(255,255,255,0.2); color: white; border: none; 
+            padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: all 0.3s ease;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        
+        /* 카드 */
+        .card {
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+            border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease; margin-bottom: 20px;
+        }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(0,0,0,0.15); }
+        
+        .card h3 {
+            color: #495057; margin-bottom: 20px; font-size: 1.3rem;
+            border-bottom: 2px solid #667eea; padding-bottom: 10px;
+        }
+        
+        /* 입력 요소 */
+        .textarea {
+            width: 100%; min-height: 120px; padding: 15px; border: 2px solid #e1e8ed;
+            border-radius: 10px; font-size: 16px; font-family: inherit; resize: vertical; 
+            margin-bottom: 15px; transition: all 0.3s ease;
+        }
+        .textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        
+        .input-field {
+            width: 100%; padding: 12px 15px; border: 2px solid #e1e8ed; border-radius: 8px; 
+            font-size: 14px; margin-bottom: 10px; transition: all 0.3s ease;
+        }
+        .input-field:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        
+        /* 버튼 */
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none;
+            padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .btn-success { background: linear-gradient(135deg, #28a745, #20c997); }
+        .btn-warning { background: linear-gradient(135deg, #ffc107, #fd7e14); color: #212529; }
+        .btn-danger { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+        .btn-secondary { background: linear-gradient(135deg, #6c757d, #495057); }
+        .btn-small { padding: 8px 12px; font-size: 12px; }
+        
+        .button-group { 
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 15px 0; 
+        }
+        
+        /* 결과 표시 */
+        .result-display {
+            display: none; background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+            border-radius: 10px; padding: 20px; margin: 15px 0; border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .result-item { 
+            background: white; padding: 15px; border-radius: 8px; margin: 10px 0; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        .result-label { 
+            font-weight: 600; color: #495057; margin-bottom: 5px; 
+            font-size: 12px; text-transform: uppercase; 
+        }
+        .result-text { font-size: 16px; line-height: 1.5; color: #212529; }
+        
+        /* 사전 섹션 */
+        .dictionary-section {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border: 2px solid #10b981; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1);
+        }
+        
+        .dictionary-search { display: flex; gap: 10px; margin-bottom: 15px; }
+        
+        .dictionary-result {
+            background: white; padding: 15px; border-radius: 10px; margin-top: 15px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08); display: none;
+        }
+        
+        /* 관리자 전용 말투 조절 */
+        .speech-control {
+            background: linear-gradient(135deg, #fff3cd, #fdeaa7);
+            border: 2px solid #ffc107; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.1);
+        }
+        
+        .speech-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .speech-btn.active {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #212529;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+        }
+        
+        .speech-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+        
+        /* 로딩 */
+        .loading {
+            display: none; background: linear-gradient(135deg, #fff3cd, #fdeaa7);
+            border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center;
+            border: 1px solid #f59e0b;
+        }
+        .loading.show { display: block; }
+        
+        .spinner {
+            display: inline-block; width: 20px; height: 20px; border: 3px solid #f59e0b;
+            border-radius: 50%; border-top-color: transparent; animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* 알림 */
+        .alert {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;
+            min-width: 300px; padding: 15px 20px; border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); font-weight: 500;
+            animation: slideDown 0.3s ease;
+        }
+        .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+        .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        .alert-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        /* 감지된 단어 표시 */
+        .detected-word {
+            display: inline-block; background: #fff3cd; color: #856404;
+            padding: 4px 8px; border-radius: 6px; margin: 3px; font-size: 14px;
+            border: 1px solid #ffc107;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+            padding: 15px; border-radius: 10px; text-align: center;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .stat-number { font-size: 2rem; font-weight: 700; color: #667eea; margin-bottom: 5px; }
+        .stat-label { font-size: 0.9rem; color: #6b7280; font-weight: 500; }
+        
+        .word-item {
+            background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px;
+            border-left: 3px solid #667eea; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .word-meaning {
+            background: #f0fdf4; padding: 15px; border-radius: 8px; margin-top: 10px;
+            border-left: 4px solid #10b981; line-height: 1.6;
+        }
+        
+        .example { background: #fefce8; padding: 10px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #eab308; font-size: 14px; }
+        .pronunciation { background: #eff6ff; padding: 10px; border-radius: 6px; margin-top: 10px; border-left: 3px solid #3b82f6; font-size: 14px; }
+        
+        /* 관리자 전용 */
+        .admin-controls { display: none; }
+        
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .login-form { min-width: 300px; padding: 30px 20px; }
+            .button-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 로그인 화면 -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-form">
+            <div class="app-logo">EasyTalk</div>
+            <div class="login-title">쉬운 말 변환 애플리케이션</div>
+            
+            <input type="text" id="loginId" class="login-input" placeholder="아이디를 입력하세요" />
+            <input type="password" id="loginPassword" class="login-input" placeholder="비밀번호를 입력하세요" />
+            
+            <button class="login-btn" onclick="adminLogin()">관리자 로그인</button>
+            <button class="login-btn guest-login-btn" onclick="guestLogin()">게스트 로그인</button>
+            
+            <div class="login-info">
+                <strong>관리자:</strong> EASY TALK / 1234<br>
+                <strong>게스트:</strong> guest / guest123<br><br>
+                <small>게스트는 일일 10회 제한, 관리자는 무제한 사용</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 사용자 표시 -->
+    <div id="userIndicator" class="user-indicator" style="display: none;">
+        <span id="currentUserName"></span>
+    </div>
+    
+    <div class="container" id="mainApp" style="display: none;">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>EasyTalk</h1>
+            <p>경계성 지능을 위한 쉬운 말 변환기</p>
+            <button class="logout-btn" onclick="logout()">로그아웃</button>
+        </div>
+        
+        <!-- 사전 섹션 -->
+        <div id="dictionarySection" class="dictionary-section" style="display: none;">
+            <div style="color: #059669; font-weight: 700; margin-bottom: 15px; font-size: 1.2rem;">
+                📚 한국어 사전
+            </div>
+            
+            <div class="dictionary-search">
+                <input type="text" id="dictionaryInput" class="input-field" placeholder="단어를 검색하세요" style="flex: 1;">
+                <button class="btn btn-success" onclick="searchRealDictionary()">검색</button>
+            </div>
+            
+            <div id="dictionaryResult" class="dictionary-result">
+                <h4 style="color: #059669; margin-bottom: 10px;">단어 정보</h4>
+                <div id="wordInfo"></div>
+            </div>
+        </div>
+        
+        <!-- 관리자 전용 말투 조절 -->
+        <div id="speechControl" class="speech-control admin-controls" style="display: none;">
+            <div style="color: #856404; font-weight: 700; margin-bottom: 15px; font-size: 1.2rem;">
+                💬 말투 선택 (관리자 전용)
+            </div>
+            
+            <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ffc107;">
+                <strong>현재 설정:</strong> <span id="currentSpeech">존댓말 (~요, ~해주세요)</span><br>
+                <small id="speechDescription">정중하고 예의바른 말투</small>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn speech-btn active" data-style="polite" onclick="changeSpeechStyle('polite')">
+                    🙏 존댓말 (~요, ~해주세요)
+                </button>
+                <button class="btn speech-btn" data-style="casual" onclick="changeSpeechStyle('casual')">
+                    😊 반말 (~다, ~야, ~해)
+                </button>
+            </div>
+            
+            <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 12px; color: #475569;">
+                <strong>말투별 특징:</strong><br>
+                • 존댓말: 정중하고 예의바른 표현, 공식적인 상황에 적합<br>
+                • 반말: 친근하고 편안한 표현, 가까운 사람들과의 대화에 적합
+            </div>
+        </div>
+        
+        <!-- 메인 변환 섹션 -->
+        <div class="card">
+            <h3>텍스트 변환</h3>
+            
+            <textarea id="textInput" class="textarea" 
+                     placeholder="변환할 어려운 텍스트를 입력하세요!
+
+경계성 지능을 가진 분들을 위해 매우 쉽게 바꿔드립니다.
+
+예시:
+- '협조 부탁드립니다' → '도움 주세요'
+- '서류를 제출해 주시기 바랍니다' → '서류를 내주세요'
+- '확인 후 연락드리겠습니다' → '알아보고 연락할게요'
+
+Ctrl+Enter로 빠른 변환 가능"></textarea>
+            
+            <div class="button-group">
+                <button id="convertBtn" class="btn" onclick="convertText()">
+                    🔄 쉽게 바꾸기
+                </button>
+                <button class="btn btn-secondary" onclick="clearInput()">
+                    🗑️ 지우기
+                </button>
+                
+                <!-- 관리자 전용 버튼 -->
+                <div id="adminControls" class="admin-controls" style="display: none;">
+                    <button class="btn btn-warning" onclick="setApiKey()">
+                        🔑 API 키 설정
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 로딩 -->
+            <div id="aiAnalyzing" class="loading">
+                <div class="spinner"></div>
+                변환 중입니다...
+            </div>
+            
+            <!-- 결과 표시 -->
+            <div id="resultSection" class="result-display">
+                <div class="result-item">
+                    <div class="result-label">📝 원본 텍스트</div>
+                    <div id="originalText" class="result-text"></div>
+                </div>
+                
+                <div class="result-item" style="border-left: 4px solid #28a745;">
+                    <div class="result-label">✨ 쉬운 말로 바뀐 결과</div>
+                    <div id="convertedText" class="result-text"></div>
+                </div>
+                
+                <div id="aiDetectedWords" style="margin-top: 15px; display: none;">
+                    <div style="font-size: 12px; color: #059669; margin-bottom: 10px; font-weight: 600;">
+                        🔄 바뀐 단어들:
+                    </div>
+                    <div id="detectedWordsList"></div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="copyResult()">
+                        📋 결과 복사
+                    </button>
+                    <button class="btn btn-success" onclick="speakText()">
+                        🔊 소리로 듣기
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 통계 섹션 -->
+        <div class="card">
+            <h3>📊 사용 통계</h3>
+            <div id="statsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                <!-- 동적으로 채워짐 -->
+            </div>
+        </div>
+        
+        <!-- 히스토리 섹션 -->
+        <div class="card">
+            <h3>📜 변환 히스토리</h3>
+            <div id="historyContainer" style="max-height: 300px; overflow-y: auto;">
+                <div style="text-align: center; padding: 20px; color: #666;">
+                    변환 기록이 없습니다.
+                </div>
+            </div>
+            
+            <!-- 관리자 전용 히스토리 관리 -->
+            <div class="admin-controls" style="display: none;">
+                <div class="button-group" style="margin-top: 15px;">
+                    <button class="btn btn-warning" onclick="clearHistory()">히스토리 삭제</button>
+                    <button class="btn btn-success" onclick="exportSystemData()">시스템 데이터 내보내기</button>
+                    <button class="btn btn-danger" onclick="resetAllData()">전체 데이터 초기화</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 관리자 전용 시스템 관리 -->
+        <div class="card admin-controls" style="display: none; border: 2px solid #dc3545;">
+            <h3 style="color: #dc3545;">🔧 시스템 관리 (관리자 전용)</h3>
+            
+            <div style="background: #f8d7da; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #dc3545;">
+                <strong>관리자 권한:</strong><br>
+                • API 키 설정 및 관리<br>
+                • 사전 단어 추가/편집<br>
+                • 시스템 데이터 백업/복원<br>
+                • 전체 사용자 활동 모니터링<br>
+                • 무제한 AI 변환 사용<br>
+                • 말투 설정 조절
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="debugSystem()">시스템 디버그</button>
+                <button class="btn btn-warning" onclick="addDictionaryWord()">사전 단어 추가</button>
+                <button class="btn btn-success" onclick="exportSystemData()">데이터 백업</button>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 15px; font-family: monospace; font-size: 12px;">
+                F12 개발자 도구 → Console에서 debugSystem() 함수로 상세 디버그 가능
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 파일 연결 -->
+    <script src="app.js"></script>
+
+<!-- === Voice Input (Chrome Web Speech API) === -->
+<script>
+(function(){
+  // Guard: only run once
+  if (window.__easytalkVoiceInstalled) return;
+  window.__easytalkVoiceInstalled = true;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const textEl = document.getElementById('textInput');
+
+  function insertMicButton() {
+    if (!textEl) return;
+    // Wrap input in a flex container if not already
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.gap = '8px';
+    wrapper.style.alignItems = 'center';
+    // preserve current input width by letting it flex
+    textEl.style.flex = '1';
+    const parent = textEl.parentElement;
+    parent.insertBefore(wrapper, textEl);
+    wrapper.appendChild(textEl);
+
+    const micBtn = document.createElement('button');
+    micBtn.type = 'button';
+    micBtn.id = 'micBtn';
+    micBtn.title = '음성 입력 시작/정지 (Chrome)';
+    micBtn.textContent = '🎤 음성 입력';
+    micBtn.style.padding = '10px 14px';
+    micBtn.style.borderRadius = '10px';
+    micBtn.style.border = 'none';
+    micBtn.style.background = '#ef4444';
+    micBtn.style.color = '#fff';
+    micBtn.style.cursor = 'pointer';
+    micBtn.style.fontWeight = '700';
+    wrapper.appendChild(micBtn);
+
+    const liveSpan = document.createElement('div');
+    liveSpan.id = 'micStatus';
+    liveSpan.style.fontSize = '12px';
+    liveSpan.style.color = '#ef4444';
+    liveSpan.style.whiteSpace = 'nowrap';
+    liveSpan.textContent = '';
+    wrapper.appendChild(liveSpan);
+
+    return {micBtn, liveSpan};
+  }
+
+  if (!textEl) {
+    console.warn('[EasyTalk Voice] #textInput 요소를 찾지 못했습니다. 음성 입력 버튼 추가를 건너뜁니다.');
+    return;
+  }
+
+  // If browser doesn't support Web Speech API
+  if (!SpeechRecognition) {
+    const ui = insertMicButton();
+    if (ui) {
+      ui.micBtn.disabled = true;
+      ui.micBtn.style.background = '#9ca3af';
+      ui.micBtn.title = '이 브라우저에서는 음성 입력을 지원하지 않습니다.';
+      ui.micStatus && (ui.micStatus.textContent = '브라우저가 음성 입력을 지원하지 않음');
+    }
+    return;
+  }
+
+  const ui = insertMicButton();
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'ko-KR';
+  recognition.interimResults = true;
+  recognition.continuous = true;
+
+  let listening = false;
+  let finalTranscript = '';
+
+  function start() {
+    if (listening) return;
+    finalTranscript = '';
+    recognition.start();
+    listening = true;
+    ui.micBtn.style.background = '#dc2626';
+    ui.micBtn.textContent = '■ 종료';
+    ui.liveSpan.textContent = '듣는 중... 말하세요';
+  }
+
+  function stop() {
+    if (!listening) return;
+    recognition.stop();
+    listening = false;
+    ui.micBtn.style.background = '#ef4444';
+    ui.micBtn.textContent = '🎤 음성 입력';
+    ui.liveSpan.textContent = '인식 종료';
+  }
+
+  ui.micBtn.addEventListener('click', () => {
+    if (listening) stop(); else start();
+  });
+
+  recognition.onresult = function(event) {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const res = event.results[i];
+      if (res.isFinal) {
+        finalTranscript += res[0].transcript;
+      } else {
+        interim += res[0].transcript;
+      }
+    }
+    const combined = (finalTranscript + ' ' + interim).trim();
+    textEl.value = combined;
+    ui.liveSpan.textContent = interim ? ('듣는 중… ' + interim) : '듣는 중...';
+  };
+
+  recognition.onerror = function(e) {
+    console.error('[EasyTalk Voice] error:', e);
+    ui.liveSpan.textContent = '오류 발생: ' + (e.error || 'unknown');
+    stop();
+  };
+
+  recognition.onend = function() {
+    // Auto-trigger convert if we ended normally and have some text
+    if (finalTranscript && typeof window.convertText === 'function') {
+      try { window.convertText(); } catch(e){ console.warn('convertText 실행 실패', e); }
+    }
+    stop();
+  };
+
+  // Expose small API for debugging
+  window.easyTalkVoice = {
+    start, stop, isListening: () => listening
+  };
+})();
+</script>
+
+</body>
+</html>
